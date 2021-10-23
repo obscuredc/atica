@@ -1,0 +1,1 @@
+//manages the filesystem emulator, path fetching, content/type fetching, etc
