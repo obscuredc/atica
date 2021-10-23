@@ -5,6 +5,9 @@ var atica = {};
 //for your os :>
 atica._os = {};
 
+//for the bios
+atica._coreins = true;
+
 //should we run your os on boot? nah by default
 atica._os.runboot = false;
 
