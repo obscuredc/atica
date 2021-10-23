@@ -14,7 +14,7 @@ if(atica._os.has == false) {
     //load bios
     _bios_load();
 } else {
-    //wow it exists
+    //wow os exists
 }
 /** BIOSTERMINAL */
 
@@ -44,6 +44,7 @@ function _bios_load() {
     } else {
         atica.cout(_bios_fail + `core not installed`, "_bios-normal tc-white", atica.bios);
     }
+    
 var vkbios = document.getElementById("vkbios");
 vkupdate();
 function vkupdate() {

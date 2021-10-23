@@ -52,3 +52,38 @@ atica.cout = function(rmsg, cl, to) {
 atica._systemreadonly = false;
 //!!!files ---
 //manages the filesystem emulator, path fetching, content/type fetching, etc
+
+//!!!logo ---
+atica._logo = `
+                                ,-.<br>
+                               ("O_)<br>
+                              / \`-/<br>
+                             /-. /<br>
+                            /   )<br>
+                           /   /  <br>
+              _           /-. /<br>
+             (_)"-._     /   )<br>
+               "-._ "-'""( )/    <br>
+                   "-/"-._" \`. <br>
+                    /     "-.'._<br>
+                   /\\       /-._"-._<br>
+    _,---...__    /  ) _,-"/    "-(_)<br>
+___<__(|) _   ""-/  / /   /<br>
+ '  \`----' ""-.   \\/ /   /<br>
+               )  ] /   /<br>
+       ____..-'   //   /                       )<br>
+   ,-""      __.,'/   /   ___                 /,<br>
+  /    ,--""/  / /   /,-""   """-.          ,'/<br>
+ [    (    /  / /   /  ,.---,_   \`._   _,-','<br>
+  \\    \`-./  / /   /  /       \`-._  """ ,-'<br>
+   \`-._  /  / /   /_,'            ""--"<br>
+       "/  / /   /"         <br>
+       /  / /   /<br>
+      /  / /   / <br>
+     /  |,'   /  <br>
+    :   /    /<br>
+    [  /   ,'  <br>
+    | /  ,'<br>
+    |/,-'<br>
+    P'<br>
+`;
