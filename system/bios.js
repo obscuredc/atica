@@ -1,9 +1,15 @@
 //here we check if an os exists and try to boot it. if not, we boot the bios terminal
-
+function assert(condition, message) {
+    if (!condition) {
+        throw new Error(message || "Assertion failed");
+    }
+}
+//from `https://stackoverflow.com/questions/15313418/what-is-assert-in-javascript`
 //just in case to prevent errors
 const _bios_check = "<span class=\"tc-lime\">\u2713</span>"; //✓
 const _bios_fail = "\u274c";  //❌
-const _typeblock = "\u2588"; //█
+const _typeblock = "\u2588";
+//tryout, u2591,u2592,u2593,u2588
 
 const _rarblock = "\u25BF";
 var _biosallow = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,[]()!@#$~ /:;?\'\"+-/*&_=<>|`";
@@ -17,20 +23,34 @@ if(atica._os.has == false) {
     //wow os exists
 }
 /** BIOSTERMINAL */
-
+var _PARSEREXECUTEOVERRIDE = true;
+var _CHARLIGHT = true;
+var _shortcuton = false;
 function _bios_load() {
     //wow we get to do fun stuff
     document.body.classList.add("_bios-normal");
     atica.cinListeners.push(function(k) {
-        if(_biosallow.includes(k.key) == true) {
-            _ctyping += k.key;
-            vkupdate();
-        } else if (k.key == "Enter") {
-            _bios_execute(_ctyping);
-            _ctyping = "";
-            vkupdate();
-        } else if (k.key == "Backspace") {
-            _ctyping = _ctyping.slice(0, _ctyping.length - 1);
+        if(_shortcuton == false) {
+            if(_biosallow.includes(k.key) == true) {
+                _ctyping += k.key;
+                vkupdate();
+            } else if (k.key == "Enter") {
+                _bios_execute(_ctyping);
+                _ctyping = "";
+                _PARSEREXECUTEOVERRIDE = true;
+                vkupdate();
+            } else if (k.key == "Backspace") {
+                _ctyping = _ctyping.slice(0, _ctyping.length - 1);
+                vkupdate();
+            } else if (k.key == "Control") {
+                _shortcuton = true;
+                vkupdate();
+            }
+        } else {
+            if(k.key == "c") {
+                _ctyping = "";
+            }
+            _shortcuton = false;
             vkupdate();
         }
     });
@@ -47,8 +67,21 @@ function _bios_load() {
     
 var vkbios = document.getElementById("vkbios");
 vkupdate();
+var _vk_sp_char = "@#$!?.,;:-=_&*%[]\\|\"";
 function vkupdate() {
-    vkbios.innerHTML = `<span class="tc-lime">atica $ </span>${_ctyping}<span class="blink tc-white">${_typeblock}</span>`;
+    if(_CHARLIGHT == true) {
+        var tempvk = "";
+        for(i = 0; i < _ctyping.length; i++) {
+            if(_vk_sp_char.includes(_ctyping[i])) {
+                tempvk += `<span class="tc-orange">${_ctyping[i]}</span>`;
+            } else {
+                tempvk += _ctyping[i];
+            }
+        }
+        vkbios.innerHTML = `<span class="tc-lime">${_shortcuton ? "[CTRL]" : ""} atica $ </span>${tempvk}<span class="blink tc-white">${_typeblock}</span>`;
+    } else {
+        vkbios.innerHTML = `<span class="tc-lime">${_shortcuton ? "[CTRL]" : ""} atica $ </span>${_ctyping}<span class="blink tc-white">${_typeblock}</span>`;
+    }
 }
 
 function _bios_execute() {
@@ -81,11 +114,42 @@ function _bios_execute() {
     if(lexer_logs_amount == 0) {
         atica.cout(_bios_check + `passed lexing`, "_bios-normal tc-white", atica.bios);
         //atica.cout(lexer_logs, "_bios-normal tc-white", atica.bios);
-        //console.log(tokens);
+        console.log(tokens);
     } else {
         atica.cout(_bios_fail + `not passed lexing`, "_bios-normal tc-white", atica.bios);
+        _PARSEREXECUTEOVERRIDE = false;
         //atica.cout(lexer_logs, "_bios-normal tc-white", atica.bios);
-        //console.log(tokens);
+        console.log(tokens);
+    }
+    var parsedcommand = parse_data(tokens);
+    
+    if(parsedcommand.Logs.length == 0 && _PARSEREXECUTEOVERRIDE == true) {
+        atica.cout(_bios_check + `passed parsing`, "_bios-normal tc-white", atica.bios);
+        //atica.cout(lexer_logs, "_bios-normal tc-white", atica.bios);
+        console.log(parsedcommand);
+    } else {
+        atica.cout(_bios_fail + `not passed parsing`, "_bios-normal tc-white", atica.bios);
+        //atica.cout(lexer_logs, "_bios-normal tc-white", atica.bios);
+        console.log(parsedcommand);
+    }
+    if(parsedcommand.HasSC == false) {
+        try {
+            assert(CommandfromNormal(parsedcommand.Command, _commands));
+            atica.cout(_bios_check + `passed finding`, "_bios-normal tc-white", atica.bios);
+            CommandfromNormal(parsedcommand.Command, _commands).execute(parsedcommand);
+        } catch {
+            //not a command
+            atica.cout(_bios_fail + `not passed finding`, "_bios-normal tc-white", atica.bios);
+        }
+    } else if (parsedcommand.HasSC == true) {
+        try {
+            assert(CommandfromPkg(parsedcommand.Command, parsedcommand.Subcommand));
+            atica.cout(_bios_check + `passed finding`, "_bios-normal tc-white", atica.bios);
+            CommandfromPkg(parsedcommand.Command, parsedcommand.Subcommand).execute(parsedcommand);
+        } catch {
+            //not a command
+            atica.cout(_bios_fail + `not passed finding`, "_bios-normal tc-white", atica.bios);
+        }
     }
 }
 
@@ -100,7 +164,7 @@ function _bios_execute() {
 
 /** global helpers */
 /* string regex-likes */
-const HString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/$^&*#@!? ";
+const HString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/$^&*#@!?.,:;\\'` ";
 const HFlag = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
 const HKeyword = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const Allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_/ 0123456789";
@@ -241,4 +305,129 @@ class Lexer {
   }
 }
 
+//!!! command parsing ----
+
+/**
+ * notes:
+ * if 2 keywords are found then => Command, Subcommand (package finder)
+ * if 1 keyword => Command (command finder)
+ * 
+ * flags and strings are mixed. .Flags, .Parameters
+ */
+
+function parse_data(tokens) {
+    //find if package or command
+    var _TTKEYWORD_count = 0;
+    for(i = 0; i < tokens.length; i++) {
+        if(tokens[i] instanceof TTKeyword) {
+            _TTKEYWORD_count++;
+        }
+    }
+    var _flaggroup = [];
+    var _paramgroup = [];
+    var _mcmd = "", _scmd = "";
+    var _logs = [];
+    if(_TTKEYWORD_count == 1) {
+        //now get it and all flags
+        for(i = 0; i < tokens.length; i++) {
+            if(tokens[i] instanceof TTKeyword) {
+                _mcmd = tokens[i].Value;
+            } else if (tokens[i] instanceof TTFlag) {
+                _flaggroup.push(tokens[i].Value);
+            } else if (tokens[i] instanceof TTString) {
+                _paramgroup.push(tokens[i].Value);
+            }
+        }
+        return {
+            Command: _mcmd,
+            Subcommand: undefined,
+            HasSC: false,
+            Params: _paramgroup,
+            Flags: _flaggroup,
+            Logs: _logs
+        }
+    } else if (_TTKEYWORD_count == 2) {
+        //now get em and all flags
+        for(i = 0; i < tokens.length; i++) {
+            if(tokens[i] instanceof TTKeyword) {
+                if(_mcmd == "") {
+                    _mcmd = tokens[i].Value;
+                } else {
+                    _scmd = tokens[i].Value;
+                }
+            } else if (tokens[i] instanceof TTFlag) {
+                _flaggroup.push(tokens[i].Value);
+            } else if (tokens[i] instanceof TTString) {
+                _paramgroup.push(tokens[i].Value);
+            }
+        }
+        return {
+            Command: _mcmd,
+            Subcommand: _scmd,
+            HasSC: true,
+            Params: _paramgroup,
+            Flags: _flaggroup,
+            Logs: _logs
+        }
+        
+    } else {
+        //error
+        _logs.push("illegal order: too many or too little commands found");
+        return {
+            Command: _mcmd,
+            Subcommand: _scmd,
+            HasSC: true,
+            Params: _paramgroup,
+            Flags: _flaggroup,
+            Logs: _logs
+        }
+    }
+}
+
+//!!! bios cmd getter ----
+var _packages = [];
+var _commands = [];
+
+class Package {
+    constructor(Commands, ID) {
+        this.Commands = Commands;
+        this.ID = ID;
+    }
+}
+class Command {
+    constructor(exec, ID) {
+        this.exec = exec;
+        this.ID = ID;
+    }
+    execute(parse_data) {
+        this.exec(parse_data); //you know, from `parse_data()`.
+    }
+}
+
+function CommandfromPkg(pkg_id, sub_id) {
+    for(i = 0; i < _packages.length; i++) {
+        if(packages[i].ID == pkg_id) {
+            return CommandfromNormal(sub_id, packages[i].Commands);
+        }
+    }
+    return false;
+}
+function CommandfromNormal(sub_id, regis) {
+    for(i = 0; i < regis.length; i++) {
+        if(regis[i].ID == sub_id) {
+            return regis[i];
+        }
+    }
+    return false;
+}
+
+function AddCommand(cmd) {
+    _commands.push(cmd);
+}
+function AddPackage(pkg) {
+    _packages.push(pkg);
+}
 //!!! bios std library ----
+AddCommand(new Command(function(d) {
+    atica.cout(_bios_check + `passed help`, "_bios-normal tc-white", atica.bios);
+}, "help"));
