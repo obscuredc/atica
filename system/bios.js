@@ -12,7 +12,7 @@ const _typeblock = "\u2588";
 //tryout, u2591,u2592,u2593,u2588
 
 const _rarblock = "\u25BF";
-var _biosallow = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,[]()!@#$~ /:;?\'\"+-/*&_=<>|`";
+var _biosallow = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,[]()!@#$~ /:;?\'\"+-/*&_=<>|`{}\\";
 var _ctyping = "";
 
 
@@ -81,15 +81,15 @@ function vkupdate() {
                 tempvk += _ctyping[i];
             }
         }
-        vkbios.innerHTML = `<span class="tc-lime">${_shortcuton ? "[CTRL]" : ""} atica $ </span>${tempvk}<span class="blink tc-white">${_typeblock}</span>`;
+        vkbios.innerHTML = `<span class="tc-lime">${_shortcuton ? "[CTRL]" : ""} atica@${CDRIVE.ID} $ </span>${tempvk}<span class="blink tc-white">${_typeblock}</span>`;
     } else {
-        vkbios.innerHTML = `<span class="tc-lime">${_shortcuton ? "[CTRL]" : ""} atica $ </span>${_ctyping}<span class="blink tc-white">${_typeblock}</span>`;
+        vkbios.innerHTML = `<span class="tc-lime">${_shortcuton ? "[CTRL]" : ""} atica@${CDRIVE.ID} $ </span>${_ctyping}<span class="blink tc-white">${_typeblock}</span>`;
     }
 }
 
 function _bios_execute() {
     //this below emulates typing it in. should always be first
-    atica.cout(`<span class="tc-lime">atica $ </span>${_ctyping}`, "_bios-normal tc-white", atica.bios);
+    atica.cout(`<span class="tc-lime">atica@${CDRIVE.ID} $ </span>${_ctyping}`, "_bios-normal tc-white", atica.bios);
     atica.cout(`:executor${_rarblock}`, " tc-orange _bios-normal", atica.bios); //executor tracer
     //everything else
     var lexer_logs = "";
@@ -120,7 +120,7 @@ function _bios_execute() {
         console.log(tokens);
     } else {
         atica.cout(_bios_fail + `not passed lexing`, "_bios-normal tc-white", atica.bios);
-        _PARSEREXECUTEOVERRIDE = false;
+        //_PARSEREXECUTEOVERRIDE = false; //this stops parser
         //atica.cout(lexer_logs, "_bios-normal tc-white", atica.bios);
         console.log(tokens);
     }
@@ -149,7 +149,7 @@ function _bios_execute() {
         }
     } else if (parsedcommand.HasSC == true) {
         try {
-            assert(CommandfromPkg(parsedcommand.Command, parsedcommand.Subcommand));
+            assert(CommandfromPkg(parsedcommand.Command, parsedcommand.Subcommand), "failed assert");
             atica.cout(_bios_check + `passed finding`, "_bios-normal tc-white", atica.bios);
             if(parsedcommand) atica.xsilence = parsedcommand.Flags.includes("-xsilence") ? true : false;
             CommandfromPkg(parsedcommand.Command, parsedcommand.Subcommand).execute(parsedcommand);
@@ -173,10 +173,9 @@ function _bios_execute() {
 
 /** global helpers */
 /* string regex-likes */
-const HString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/$^&*#@!?.,:;\\'` ()[]";
+const HString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/$^&*#@!?.,:;\\'` ()[]+-{}";
 const HFlag = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
 const HKeyword = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const Allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_/ 0123456789";
 const SpaceAllowed = " ";
 
 /* type classes */
@@ -470,7 +469,11 @@ function StringAnalyzer(r) {
             t_.push(_o__[i].Value);
         } else if (_o__[i].Type == "file") {
             //fetch file contents
-            t_.push(getFile(_o__[i].Value, CDRIVE).getContent());
+            try {
+                t_.push(getFile(_o__[i].Value, CDRIVE).getContent());
+            } catch {
+                t_.push("");
+            }
         } else if (_o__[i].Type == "variable") {
             //fetch variable contents
         }
@@ -499,8 +502,8 @@ class Command {
 
 function CommandfromPkg(pkg_id, sub_id) {
     for(i = 0; i < _packages.length; i++) {
-        if(packages[i].ID == pkg_id) {
-            return CommandfromNormal(sub_id, packages[i].Commands);
+        if(_packages[i].ID == pkg_id) {
+            return CommandfromNormal(sub_id, _packages[i].Commands);
         }
     }
     return false;
@@ -543,8 +546,13 @@ function AddPackage(pkg) {
  * 🔐0x1f510
  * 🛑0x1f6d1
  * 📕0x1f4d5
+ * 💿0x1f4bf
+ * ⚡0x26a1
+ * 📜0x1f4dc
  * String.fromCodePoint(0x1F4E6) -> 📦
  */
+
+//command names should ONLY INCLUDE a-zA-Z or lexer gets mad 0-0
 AddCommand(new Command(function(d) {
     if(d.Flags.includes("-all")) {
         //all commands help
@@ -559,18 +567,39 @@ function _Tree_ls(root,charcode) {
 }
 AddCommand(new Command(function(d) {
     if(d.Flags.includes("-cmd") || d.Flags.includes("-commands")) {
-        _Tree_ls(_commands,0x1f4d5);
-    } if (d.Flags.includes("-pkg") || d.Flags.includes("-packages")) {
+        _Tree_ls(_commands,0x26a1);
+    } 
+    if (d.Flags.includes("-pkg") || d.Flags.includes("-packages")) {
         _Tree_ls(_packages,0x1f4e6);
-    } if(d.Flags.includes("-all")) {
+    } 
+    if(d.Flags.includes("-cmdl")) {
         for(i=0;i<_packages.length;i++) {
             atica.cout(`${String.fromCodePoint(0x1f4e6)}${_packages[i].ID}`, "_bios-normal tc-white", atica.bios);
-            _Tree_ls(_packages[i].Commands,0x1f4d5);
+            _Tree_ls(_packages[i].Commands,0x26a1);
         }
-        atica.cout(`${String.fromCodePoint(0x1f4e6)}#root`, "_bios-normal tc-white", atica.bios);
-        _Tree_ls(_commands,0x1f4d5);
-    } else {
-        atica.cout(`there is no default function for this command. try using '--commands'.`, "_bios-normal tc-white", atica.bios);
+        atica.cout(`${String.fromCodePoint(0x1f4e6)}system`, "_bios-normal tc-white", atica.bios);
+        _Tree_ls(_commands,0x26a1);
+    } 
+    if(d.Flags.includes("-drives")) {
+        for(i=0; i<Drives.length;i++) {
+            atica.cout(`${String.fromCodePoint(0x1f4bf)}${Drives[i].ID}`, "_bios-normal tc-white", atica.bios);
+        }
+    }
+    if(d.Flags.includes("-files")) {
+        for(i=0; i<CDRIVE.getFiles().length;i++) {
+            atica.cout(`${CDRIVE.getFiles()[i].ENDL == "sys" ? String.fromCodePoint(0x1f4dc) : String.fromCodePoint(0x1f4c4)}${CDRIVE.getFiles()[i].ID}`, "_bios-normal tc-white", atica.bios);
+        }
+    }
+    if(d.Flags.includes("-filesys")) {
+        for(i=0; i<Drives.length;i++) {
+            atica.cout(`${String.fromCodePoint(0x1f4bf)}${Drives[i].ID}`, "_bios-normal tc-white", atica.bios);
+            for(i2=0; i2<Drives[i].getFiles().length;i2++) {
+                atica.cout(`${Drives[i].getFiles()[i2].ENDL == "sys" ? String.fromCodePoint(0x1f4dc) : String.fromCodePoint(0x1f4c4)}${Drives[i].getFiles()[i2].ID}`, "_bios-normal tc-white", atica.bios);
+            }
+        }
+    }
+    if(d.Flags.length == 0) {
+        atica.cout(`there is no default function for this command. try using 'tree --commands'.`, "_bios-normal tc-white", atica.bios);
     }
 }, "tree"));
 AddCommand(new Command(function(d) {
@@ -587,13 +616,57 @@ AddCommand(new Command(function(d) {
 AddCommand(new Command(function(d) {
     if(d.Params.length == 1) {
         if(d.Flags.includes("js")) {
+            eval(StringAnalyzer(d.Params[0]));
             atica.cout(`${String.fromCodePoint(0x1f6e0)}building js`, "_bios-normal tc-white", atica.bios);
-            eval(d.Params[0]);
         }
     } else {
         atica.cout(_bios_fail + `invalid args amount: ${d.Params.length}.`, "_bios-normal tc-white", atica.bios);
     }
-}, "build"))
-AddPackage(new Package([new Command(function(d) {
-    atica.cout(`sample`, "_bios-normal tc-white", atica.bios);
-}, "sample")], "test-pkg"));
+}, "build"));
+AddCommand(new Command(function(d) {
+    if(d.Params.length == 1) {
+        CDRIVE = getDrive(d.Params[0]).ID == "" ? CDRIVE : getDrive(d.Params[0]);
+        if(getDrive(d.Params[0]).ID == "") {
+            atica.cout(_bios_fail + `invalid drive: ${d.Params[0]}`, "_bios-normal tc-white", atica.bios);
+        }
+    } else {
+        atica.cout(_bios_fail + `invalid args amount: ${d.Params.length}.`, "_bios-normal tc-white", atica.bios);
+    }
+}, "cd"))
+AddCommand(new Command(function(d) {
+    if(d.Params.length == 1) {
+        if(getFile(d.Params[0], CDRIVE) == false) {
+            CDRIVE.appendFile(new FFile(d.Params[0]));
+        } else {
+            atica.cout(_bios_fail + `file already exists`, "_bios-normal tc-white", atica.bios);
+        }
+    } else {
+        atica.cout(_bios_fail + `invalid args amount: ${d.Params.length}.`, "_bios-normal tc-white", atica.bios);
+    }
+}, "touch"))
+AddCommand(new Command(function(d) {
+    if(d.Params.length == 2) {
+        try {
+            getFile(d.Params[0], CDRIVE).setContent(d.Params[1]);
+            atica.cout(String.fromCodePoint(0x1f4dd) + `set file ${d.Params[0]} to ${d.Params[1]}.`, "_bios-normal tc-white", atica.bios);
+        } catch {
+            atica.cout(_bios_fail + `invalid file name ${d.Params[0]}`, "_bios-normal tc-white", atica.bios);
+        }
+    } else {
+        atica.cout(_bios_fail + `invalid args amount: ${d.Params.length}.`, "_bios-normal tc-white", atica.bios);
+    }
+}, "write"))
+AddCommand(new Command(function(d) {
+    if(d.Params.length == 1) {
+        try {
+            atica.cout(String.fromCodePoint(0x1f4c4) + getFile(d.Params[0], CDRIVE).getContent(), "_bios-normal tc-white", atica.bios);
+        } catch {
+            atica.cout(_bios_fail + `invalid file name ${d.Params[0]}`, "_bios-normal tc-white", atica.bios);
+        }
+    } else {
+        atica.cout(_bios_fail + `invalid args amount: ${d.Params.length}.`, "_bios-normal tc-white", atica.bios);
+    }
+}, "read"))
+// AddPackage(new Package([new Command(function(d) {
+//     atica.cout(`sample`, "_bios-normal tc-white", atica.bios);
+// }, "sample")], "testpkg"));

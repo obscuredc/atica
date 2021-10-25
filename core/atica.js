@@ -62,6 +62,7 @@ class FFile {
     constructor(ID) {
         this.ID = ID;
         this.Content = "";
+        this.ENDL = "";
     }
     getContent() {
         return this.Content;
@@ -96,10 +97,13 @@ function getFile(ID,drive) {
             return drive.Files[i];
         }
     }
-    return new FFile()
+    return false;
 }
 Drives.push(new FDrive("C"));
 CDRIVE = getDrive("C");
+var _aticaJS_temp = new FFile("temp");
+_aticaJS_temp.ENDL = "sys";
+CDRIVE.appendFile(_aticaJS_temp);
 //!!!logo ---
 atica._logo = `
                                 ,-.<br>
