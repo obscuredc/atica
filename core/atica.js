@@ -55,7 +55,51 @@ atica.cout = function(rmsg, cl, to) {
 atica._systemreadonly = false;
 //!!!files ---
 //manages the filesystem emulator, path fetching, content/type fetching, etc
-
+var Files = [];
+var Drives = [];
+var CDRIVE;
+class FFile {
+    constructor(ID) {
+        this.ID = ID;
+        this.Content = "";
+    }
+    getContent() {
+        return this.Content;
+    }
+    setContent(str) {
+        this.Content = str;
+    }
+}
+class FDrive {
+    constructor(ID) {
+        this.ID = ID;
+        this.Files = [];
+    }
+    getFiles() {
+        return this.Files;
+    }
+    appendFile(f) {
+        this.Files.push(f);
+    }
+}
+function getDrive(ID) {
+    for(i = 0 ; i < Drives.length; i++) {
+        if(Drives[i].ID == ID) {
+            return Drives[i];
+        }
+    }
+    return new FDrive("");
+}
+function getFile(ID,drive) {
+    for(i = 0; i < drive.Files.length; i++) {
+        if(drive.Files[i].ID == ID) {
+            return drive.Files[i];
+        }
+    }
+    return new FFile()
+}
+Drives.push(new FDrive("C"));
+CDRIVE = getDrive("C");
 //!!!logo ---
 atica._logo = `
                                 ,-.<br>

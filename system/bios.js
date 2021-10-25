@@ -173,7 +173,7 @@ function _bios_execute() {
 
 /** global helpers */
 /* string regex-likes */
-const HString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/$^&*#@!?.,:;\\'` ";
+const HString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/$^&*#@!?.,:;\\'` ()[]";
 const HFlag = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
 const HKeyword = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const Allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_/ 0123456789";
@@ -460,6 +460,23 @@ class StringLexer {
     this.Output.push({Type: "string", Value: this._});
   }
 }
+function StringAnalyzer(r) {
+    var _le_temp = new StringLexer(r);
+    _le_temp.Lex();
+    var _o__ = _le_temp.Output;
+    var t_ = [];
+    for(i=0;i<_o__.length;i++) {
+        if(_o__[i].Type == "string") {  
+            t_.push(_o__[i].Value);
+        } else if (_o__[i].Type == "file") {
+            //fetch file contents
+            t_.push(getFile(_o__[i].Value, CDRIVE).getContent());
+        } else if (_o__[i].Type == "variable") {
+            //fetch variable contents
+        }
+    }
+    return t_.join("");
+}
 //!!! bios cmd getter ----
 var _packages = [];
 var _commands = [];
@@ -567,6 +584,16 @@ AddCommand(new Command(function(d) {
     atica.bios.innerHTML = "";
     if(_b_temp == true) bmessage();
 }, "clear"))
+AddCommand(new Command(function(d) {
+    if(d.Params.length == 1) {
+        if(d.Flags.includes("js")) {
+            atica.cout(`${String.fromCodePoint(0x1f6e0)}building js`, "_bios-normal tc-white", atica.bios);
+            eval(d.Params[0]);
+        }
+    } else {
+        atica.cout(_bios_fail + `invalid args amount: ${d.Params.length}.`, "_bios-normal tc-white", atica.bios);
+    }
+}, "build"))
 AddPackage(new Package([new Command(function(d) {
     atica.cout(`sample`, "_bios-normal tc-white", atica.bios);
 }, "sample")], "test-pkg"));
