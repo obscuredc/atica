@@ -34,6 +34,7 @@ document.addEventListener("keydown", function(key) {
     }
 });
 //atica.cout -> cout in terminal bios
+atica.xsilence = false;
 atica.bios = document.getElementById("bios");
 atica.rout = function(raw, to) {
     try {
@@ -43,7 +44,9 @@ atica.rout = function(raw, to) {
     }
 }
 atica.cout = function(rmsg, cl, to) {
-    atica.rout(`<p class="${cl}">${rmsg}</p>`, to);
+    if(atica.xsilence == false) {
+        atica.rout(`<p class="${cl}">${rmsg}</p>`, to);
+    }
 }
 //!!!env ---
 //controls system defined and user defined variables and permissions.

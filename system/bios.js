@@ -54,9 +54,11 @@ function _bios_load() {
             vkupdate();
         }
     });
+    bmessage();
 }
 
     /** messages */
+function bmessage() {
     atica.cout(`:atica${_rarblock}`, " tc-orange _bios-normal", atica.bios);
     atica.cout(_bios_fail + `no os was detected, booting atica bios`, "_bios-normal tc-white", atica.bios);
     if(atica._coreins == true) {
@@ -64,6 +66,7 @@ function _bios_load() {
     } else {
         atica.cout(_bios_fail + `core not installed`, "_bios-normal tc-white", atica.bios);
     }
+}
     
 var vkbios = document.getElementById("vkbios");
 vkupdate();
@@ -136,7 +139,10 @@ function _bios_execute() {
         try {
             assert(CommandfromNormal(parsedcommand.Command, _commands));
             atica.cout(_bios_check + `passed finding`, "_bios-normal tc-white", atica.bios);
+            if(parsedcommand) atica.xsilence = parsedcommand.Flags.includes("-xsilence") ? true : false;
             CommandfromNormal(parsedcommand.Command, _commands).execute(parsedcommand);
+            atica.xsilence = false;
+            atica.cout(_bios_check + `passed execution`, "_bios-normal tc-white", atica.bios);
         } catch {
             //not a command
             atica.cout(_bios_fail + `not passed finding`, "_bios-normal tc-white", atica.bios);
@@ -145,7 +151,10 @@ function _bios_execute() {
         try {
             assert(CommandfromPkg(parsedcommand.Command, parsedcommand.Subcommand));
             atica.cout(_bios_check + `passed finding`, "_bios-normal tc-white", atica.bios);
+            if(parsedcommand) atica.xsilence = parsedcommand.Flags.includes("-xsilence") ? true : false;
             CommandfromPkg(parsedcommand.Command, parsedcommand.Subcommand).execute(parsedcommand);
+            atica.xsilence = false;
+            atica.cout(_bios_check + `passed execution`, "_bios-normal tc-white", atica.bios);
         } catch {
             //not a command
             atica.cout(_bios_fail + `not passed finding`, "_bios-normal tc-white", atica.bios);
@@ -257,6 +266,8 @@ class Lexer {
         this.Continue();
     } else {
         //invalidchar
+        this.Tokens.push(new TTKeyword(temp));
+        temp = "";
         this.ThrowError(`LEXING invalid tok "${this.ctok}"`);
     }
   }
@@ -273,6 +284,8 @@ class Lexer {
         temp = "";
     } else {
         //invalidchar
+        this.Tokens.push(new TTFlag(temp));
+        temp = "";
         this.ThrowError(`LEXING invalid tok "${this.ctok}"`);
     }
   }
@@ -383,7 +396,70 @@ function parse_data(tokens) {
         }
     }
 }
-
+var _C = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+var _FP = "_.-";
+var _VP = "_";
+var _SP = "$@";
+class StringLexer {
+  constructor(text) {
+    this.Text = text;
+    this.Index = 0;
+    this.Stop = false;
+    this.ctok = this.Text[this.Index];
+    this.Output = [];
+    this._ = "";
+  }
+  Continue() {
+    this.Index++;
+    this.ctok = this.Text[this.Index];
+    if (this.Index >= this.Text.length) {
+    	this.ctok = "\u2929";
+      this.Stop = true;
+    }
+	  console.log("called this.Continue()");
+  }
+  Lex() {
+    while (this.Stop == false) {
+      if (this.ctok == "$") {
+        this.BuildVariable();
+      } else if (this.ctok == "@") {
+        this.BuildFile();
+      } else {
+        this.BuildNormal();
+      }
+    }
+    return this.Output;
+  }
+  BuildVariable() {
+    this._ = "";
+	  console.log("began building variable");
+	  this.Continue();
+    while ((_C.includes(this.ctok) == true || _VP.includes(this.ctok) == true) && this.Stop == false) {
+      this._ += this.ctok;
+      this.Continue();
+    }
+    this.Output.push({Type: "variable", Value: this._});
+  }
+  BuildFile() {
+		this._ = "";
+	  console.log("began building file");
+	  this.Continue();
+    while ((_C.includes(this.ctok) == true || _FP.includes(this.ctok) == true) && this.Stop == false) {
+      this._ += this.ctok;
+      this.Continue();
+    }
+    this.Output.push({Type: "file", Value: this._});
+  }
+	BuildNormal() {
+		this._ = "";
+	  console.log("began building normal");
+    while (_SP.includes(this.ctok) == false && this.Stop == false) {
+      this._ += this.ctok;
+      this.Continue();
+    }
+    this.Output.push({Type: "string", Value: this._});
+  }
+}
 //!!! bios cmd getter ----
 var _packages = [];
 var _commands = [];
@@ -428,6 +504,69 @@ function AddPackage(pkg) {
     _packages.push(pkg);
 }
 //!!! bios std library ----
+/**
+ * 
+ * 📦0x1f4e6
+ * 📄0x1f4c4
+ * 📃0x1f4c3
+ * 📑0x1f4d1
+ * 📎0x1f4ce
+ * ✏️0x1f589
+ * 📝0x1f4dd
+ * ⌨️0x2328
+ * ⚙️0x2699
+ * 🛠0x1f6e0
+ * 🛡0x1f6e1
+ * 🔑0x1f511
+ * ✉️0x2709
+ * 📁0x1f4c1
+ * 📌0x1f4cc
+ * 🔒0x1f512
+ * 🔓0x1f513
+ * 🔐0x1f510
+ * 🛑0x1f6d1
+ * 📕0x1f4d5
+ * String.fromCodePoint(0x1F4E6) -> 📦
+ */
 AddCommand(new Command(function(d) {
-    atica.cout(_bios_check + `passed help`, "_bios-normal tc-white", atica.bios);
+    if(d.Flags.includes("-all")) {
+        //all commands help
+    } else {
+        atica.cout(`no flags given: try doing 'help --all'`, "_bios-normal tc-white", atica.bios);
+    }
 }, "help"));
+function _Tree_ls(root,charcode) {
+    for(i=0; i< root.length; i++) {
+        atica.cout(`${String.fromCodePoint(charcode)}${root[i].ID}`, "_bios-normal tc-white", atica.bios);
+    }
+}
+AddCommand(new Command(function(d) {
+    if(d.Flags.includes("-cmd") || d.Flags.includes("-commands")) {
+        _Tree_ls(_commands,0x1f4d5);
+    } if (d.Flags.includes("-pkg") || d.Flags.includes("-packages")) {
+        _Tree_ls(_packages,0x1f4e6);
+    } if(d.Flags.includes("-all")) {
+        for(i=0;i<_packages.length;i++) {
+            atica.cout(`${String.fromCodePoint(0x1f4e6)}${_packages[i].ID}`, "_bios-normal tc-white", atica.bios);
+            _Tree_ls(_packages[i].Commands,0x1f4d5);
+        }
+        atica.cout(`${String.fromCodePoint(0x1f4e6)}#root`, "_bios-normal tc-white", atica.bios);
+        _Tree_ls(_commands,0x1f4d5);
+    } else {
+        atica.cout(`there is no default function for this command. try using '--commands'.`, "_bios-normal tc-white", atica.bios);
+    }
+}, "tree"));
+AddCommand(new Command(function(d) {
+    var _b_temp = false;
+    if(d.Flags.includes("-bmsg") || d.Flags.includes("-bmessage")) {
+        _b_temp = true;
+    } else {
+        //nothing
+    }
+    //default action
+    atica.bios.innerHTML = "";
+    if(_b_temp == true) bmessage();
+}, "clear"))
+AddPackage(new Package([new Command(function(d) {
+    atica.cout(`sample`, "_bios-normal tc-white", atica.bios);
+}, "sample")], "test-pkg"));
