@@ -30,6 +30,7 @@ function _bios_load() {
     //wow we get to do fun stuff
     document.body.classList.add("_bios-normal");
     atica.cinListeners.push(function(k) {
+        console.log(`GET key${k.key}`);
         if(_shortcuton == false) {
             if(_biosallow.includes(k.key) == true) {
                 _ctyping += k.key;
@@ -77,19 +78,33 @@ function vkupdate() {
         for(i = 0; i < _ctyping.length; i++) {
             if(_vk_sp_char.includes(_ctyping[i])) {
                 tempvk += `<span class="tc-orange">${_ctyping[i]}</span>`;
+            } else if (_ctyping[i] == "<") {
+                tempvk += "&lt;";
+            } else if (_ctyping[i] == ">") {
+                tempvk += "&gt;";
             } else {
                 tempvk += _ctyping[i];
             }
         }
-        vkbios.innerHTML = `<span class="tc-lime">${_shortcuton ? "[CTRL]" : ""} atica@${CDRIVE.ID} $ </span>${tempvk}<span class="blink tc-white">${_typeblock}</span>`;
+        vkbios.innerHTML = `<span class="tc-lime">${_shortcuton ? "[CTRL]" : ""} atica@<span class="tc-mblue">${CDRIVE.ID}</span> $ </span>${tempvk}<span class="blink tc-white">${_typeblock}</span>`;
     } else {
-        vkbios.innerHTML = `<span class="tc-lime">${_shortcuton ? "[CTRL]" : ""} atica@${CDRIVE.ID} $ </span>${_ctyping}<span class="blink tc-white">${_typeblock}</span>`;
+        vkbios.innerHTML = `<span class="tc-lime">${_shortcuton ? "[CTRL]" : ""} atica@<span class="tc-mblue">${CDRIVE.ID}</span> $ </span>${_ctyping}<span class="blink tc-white">${_typeblock}</span>`;
     }
 }
 
 function _bios_execute() {
     //this below emulates typing it in. should always be first
-    atica.cout(`<span class="tc-lime">atica@${CDRIVE.ID} $ </span>${_ctyping}`, "_bios-normal tc-white", atica.bios);
+    var _bex = "";
+    for(i = 0; i < _ctyping.length; i++) {
+        if(_ctyping[i] == "<") {
+            _bex += "&lt;";
+        } else if (_ctyping[i] == ">") {
+            _bex += "&gt;";
+        } else {
+            _bex += _ctyping[i];
+        }
+    }
+    atica.cout(`<span class="tc-lime">atica@<span class="tc-mblue">${CDRIVE.ID}</span> $ </span>${_bex}`, "_bios-normal tc-white", atica.bios);
     atica.cout(`:executor${_rarblock}`, " tc-orange _bios-normal", atica.bios); //executor tracer
     //everything else
     var lexer_logs = "";
@@ -173,7 +188,7 @@ function _bios_execute() {
 
 /** global helpers */
 /* string regex-likes */
-const HString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/$^&*#@!?.,:;\\'` ()[]+-{}";
+const HString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/$^&*#@!?.,:;\\'` ()[]+-{}<>";
 const HFlag = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
 const HKeyword = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const SpaceAllowed = " ";
@@ -619,6 +634,12 @@ AddCommand(new Command(function(d) {
             eval(StringAnalyzer(d.Params[0]));
             atica.cout(`${String.fromCodePoint(0x1f6e0)}building js`, "_bios-normal tc-white", atica.bios);
         }
+        if(d.Flags.includes("html")) {
+            var _htmltemp = StringAnalyzer(d.Params[0]);
+            atica.cout(`${String.fromCodePoint(0x1f6e0)}building html`, "_bios-normal tc-white", atica.bios);
+            var _htmlwindow = window.open();
+            _htmlwindow.document.write(_htmltemp);
+        }
     } else {
         atica.cout(_bios_fail + `invalid args amount: ${d.Params.length}.`, "_bios-normal tc-white", atica.bios);
     }
@@ -648,7 +669,7 @@ AddCommand(new Command(function(d) {
     if(d.Params.length == 2) {
         try {
             getFile(d.Params[0], CDRIVE).setContent(d.Params[1]);
-            atica.cout(String.fromCodePoint(0x1f4dd) + `set file ${d.Params[0]} to ${d.Params[1]}.`, "_bios-normal tc-white", atica.bios);
+            atica.cout(String.fromCodePoint(0x1f4dd) + `set file ${d.Params[0]} to ${d.Params[1]}.`, "_bios-normal tc-white", atica.bios, true);
         } catch {
             atica.cout(_bios_fail + `invalid file name ${d.Params[0]}`, "_bios-normal tc-white", atica.bios);
         }
@@ -667,6 +688,34 @@ AddCommand(new Command(function(d) {
         atica.cout(_bios_fail + `invalid args amount: ${d.Params.length}.`, "_bios-normal tc-white", atica.bios);
     }
 }, "read"))
+AddCommand(new Command(function(d) {
+    var msg = d.Params.join("");
+    if(d.Flags.includes("r")) {
+        atica.cout(msg, "_bios-normal tc-white", atica.bios);
+    } else if(d.Flags.includes("p")) {
+        msg = StringAnalyzer(msg);
+        var pmsg = "";
+        for(i=0;i<msg.length;i++) {
+        if(msg[i] == "<") {
+            pmsg += "&lt;";
+        } else if (msg[i] == ">") {
+            pmsg += "&gt;";
+        } else {
+            pmsg += msg[i];
+        }}
+        atica.cout(pmsg, "_bios-normal tc-white", atica.bios);
+    } else {
+        atica.cout(StringAnalyzer(msg), "_bios-normal tc-white", atica.bios);
+    }
+}, "echo"))
+AddCommand(new Command(function(d) {
+    try {
+        _ctyping = d.Params.join("");
+        _bios_execute();
+    } catch {
+        atica.cout(_bios_fail + `unknown error`, "_bios-normal tc-white", atica.bios);
+    }
+}, "exec"))
 // AddPackage(new Package([new Command(function(d) {
 //     atica.cout(`sample`, "_bios-normal tc-white", atica.bios);
 // }, "sample")], "testpkg"));

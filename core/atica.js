@@ -43,9 +43,25 @@ atica.rout = function(raw, to) {
         //lmao nothing. ignore
     }
 }
-atica.cout = function(rmsg, cl, to) {
-    if(atica.xsilence == false) {
-        atica.rout(`<p class="${cl}">${rmsg}</p>`, to);
+atica.cout = function(rmsg, cl, to, uparse = false) {
+    if(uparse) {
+        var prmsg = "";
+        for(i = 0; i < rmsg.length; i++) {
+            if(rmsg[i] == "<") {
+                prmsg += "&lt;";
+            } else if (rmsg[i] == ">") {
+                prmsg += "&gt;";
+            } else {
+                prmsg += rmsg[i];
+            }
+        }
+         if(atica.xsilence == false) {
+             atica.rout(`<p class="${cl}">${prmsg}</p>`, to);
+        }
+    } else {
+        if(atica.xsilence == false) {
+            atica.rout(`<p class="${cl}">${rmsg}</p>`, to);
+       }
     }
 }
 //!!!env ---
