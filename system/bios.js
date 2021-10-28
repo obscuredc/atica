@@ -862,9 +862,21 @@ AddCommand(new Command(function(d) {
 AddCommand(new Command(function(d) {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
+        atica.cout(this.status, "_bios-normal tc-white", atica.bios);
         if (this.readyState == 4 && this.status == 200) {
            // Typical action to be performed when the document is ready:
-           atica.cout(xhttp.responseText, "_bios-normal tc-white", atica.bios);
+           var msg = xhttp.responseText;
+            var pmsg = "";
+            for(i=0;i<msg.length;i++) {
+            if(msg[i] == "<") {
+                pmsg += "&lt;";
+            } else if (msg[i] == ">") {
+                pmsg += "&gt;";
+            } else {
+                pmsg += msg[i];
+            }}
+            atica.cout(pmsg, "_bios-normal tc-white", atica.bios);
+           //atica.cout(xhttp.responseText, "_bios-normal tc-white", atica.bios);
         }
     }; //https://raw.githubusercontent.com/obscuredc/atica/main/readme.md
     xhttp.open("GET", d.Params[0], true);
