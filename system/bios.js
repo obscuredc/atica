@@ -859,6 +859,17 @@ AddCommand(new Command(function(d) {
         atica.cout(_bios_fail + `unknown error`, "_bios-normal tc-white", atica.bios);
     }
 }, "bincompile"))
+AddCommand(new Command(function(d) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+           // Typical action to be performed when the document is ready:
+           atica.cout(xhttp.responseText, "_bios-normal tc-white", atica.bios);
+        }
+    }; //https://raw.githubusercontent.com/obscuredc/atica/main/readme.md
+    xhttp.open("GET", d.Params[0], true);
+    xhttp.send();
+}, "fetch"))
 AddPackage(new Package([
 
 ], "sys"))
