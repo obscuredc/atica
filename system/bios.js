@@ -864,17 +864,20 @@ AddCommand(new Command(function(d) {
     xhttp.onreadystatechange = function() {
         atica.cout(this.status, "_bios-normal tc-white", atica.bios);
         if (this.readyState == 4 && this.status == 200) {
-           // Typical action to be performed when the document is ready:
-           var msg = xhttp.responseText;
+            // Typical action to be performed when the document is ready:
+            var msg = xhttp.responseText;
             var pmsg = "";
             for(i=0;i<msg.length;i++) {
-            if(msg[i] == "<") {
-                pmsg += "&lt;";
-            } else if (msg[i] == ">") {
-                pmsg += "&gt;";
-            } else {
-                pmsg += msg[i];
-            }}
+                if(msg[i] == "<") {
+                    pmsg += "&lt;";
+                } else if (msg[i] == ">") {
+                    pmsg += "&gt;";
+                } else if(msg[i] == "\n") {
+                    pmsg += "<br>";
+                } else {
+                    pmsg += msg[i];
+                }
+            }
             atica.cout(pmsg, "_bios-normal tc-white", atica.bios);
            //atica.cout(xhttp.responseText, "_bios-normal tc-white", atica.bios);
         }
@@ -882,6 +885,26 @@ AddCommand(new Command(function(d) {
     xhttp.open("GET", d.Params[0], true);
     xhttp.send();
 }, "fetch"))
+AddCommand(new Command(function(d) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        atica.cout(this.status, "_bios-normal tc-white", atica.bios);
+        if (this.readyState == 4 && this.status == 200) {
+            // Typical action to be performed when the document is ready:
+            var code = xhttp.responseText;
+            atica.cout(`got code`, "_bios-normal tc-white", atica.bios);
+            try {
+                eval(code);
+            } catch {
+                atica.cout("there was an error building code", "_bios-normal tc-white", atica.bios);
+            }
+            atica.cout(`built code`, "_bios-normal tc-white", atica.bios);
+           //atica.cout(xhttp.responseText, "_bios-normal tc-white", atica.bios);
+        }
+    }; //https://raw.githubusercontent.com/obscuredc/atica/main/readme.md
+    xhttp.open("GET", "pkg/" + d.Params[0], true);
+    xhttp.send();
+}, "pkg"))
 AddPackage(new Package([
 
 ], "sys"))
