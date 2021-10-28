@@ -66,7 +66,39 @@ atica.cout = function(rmsg, cl, to, uparse = false) {
 }
 //!!!env ---
 //controls system defined and user defined variables and permissions.
+_variables = [];
+class FVar {
+    constructor(ID, Value, Type = "Normal") {
+        this.ID = ID;
+        this.Value = Value;
+        this.Type = Type;
 
+        this.Readable = true;
+        this.Writeable = true;
+        if(Type == "System") {
+            this.Readable = true;
+            this.Writeable = false;
+        }
+    }
+    getValue() {
+        if(this.Readable) return this.Value;
+        return ""
+    }
+    setValue(v) {
+        if(this.Writeable) this.Value = v;
+    }
+}
+function AddVariable(v) {
+    _variables.push(v);
+}
+function GetVariable(id) {
+    for(i = 0; i < _variables.length; i++) {
+        if(_variables[i].ID == id) {
+            return _variables[i];
+        }
+    }
+    return false;
+}
 //are the system defined variables readonly?
 atica._systemreadonly = false;
 //!!!files ---

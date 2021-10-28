@@ -14,7 +14,7 @@ const _typeblock = "\u2588";
 const _rarblock = "\u25BF";
 var _biosallow = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,[]()!@#$~ /:;?\'\"+-/*&_=<>|`{}\\";
 var _ctyping = "";
-
+atica.log = true;
 
 if(atica._os.has == false) {
     //load bios
@@ -30,7 +30,6 @@ function _bios_load() {
     //wow we get to do fun stuff
     document.body.classList.add("_bios-normal");
     atica.cinListeners.push(function(k) {
-        console.log(`GET key${k.key}`);
         if(_shortcuton == false) {
             if(_biosallow.includes(k.key) == true) {
                 _ctyping += k.key;
@@ -73,6 +72,8 @@ var vkbios = document.getElementById("vkbios");
 vkupdate();
 var _vk_sp_char = "@#$!?.,;:-=_&*%[]\\|\"";
 function vkupdate() {
+    // console.clear();
+    // console.log(_ctyping);
     if(_CHARLIGHT == true) {
         var tempvk = "";
         for(i = 0; i < _ctyping.length; i++) {
@@ -91,8 +92,9 @@ function vkupdate() {
         vkbios.innerHTML = `<span class="tc-lime">${_shortcuton ? "[CTRL]" : ""} atica@<span class="tc-mblue">${CDRIVE.ID}</span> $ </span>${_ctyping}<span class="blink tc-white">${_typeblock}</span>`;
     }
 }
-
+atica.xsilAffectsLog = true;
 function _bios_execute() {
+    console.log(`xsil=${atica.xsilence}\nlog=${atica.log}`);
     //this below emulates typing it in. should always be first
     var _bex = "";
     for(i = 0; i < _ctyping.length; i++) {
@@ -104,8 +106,10 @@ function _bios_execute() {
             _bex += _ctyping[i];
         }
     }
-    atica.cout(`<span class="tc-lime">atica@<span class="tc-mblue">${CDRIVE.ID}</span> $ </span>${_bex}`, "_bios-normal tc-white", atica.bios);
-    atica.cout(`:executor${_rarblock}`, " tc-orange _bios-normal", atica.bios); //executor tracer
+    if(!atica.xsilence) {
+        atica.cout(`<span class="tc-lime">atica@<span class="tc-mblue">${CDRIVE.ID}</span> $ </span>${_bex}`, "_bios-normal tc-white", atica.bios);
+        if(atica.log) atica.cout(`:executor${_rarblock}`, " tc-orange _bios-normal", atica.bios); //executor tracer
+    }
     //everything else
     var lexer_logs = "";
     var lexer_logs_amount = 0;
@@ -130,11 +134,11 @@ function _bios_execute() {
     }
     var tokens = lexer.Lex();
     if(lexer_logs_amount == 0) {
-        atica.cout(_bios_check + `passed lexing`, "_bios-normal tc-white", atica.bios);
+        if(atica.log) atica.cout(_bios_check + `passed lexing`, "_bios-normal tc-white", atica.bios);
         //atica.cout(lexer_logs, "_bios-normal tc-white", atica.bios);
         console.log(tokens);
     } else {
-        atica.cout(_bios_fail + `not passed lexing`, "_bios-normal tc-white", atica.bios);
+        if(atica.log) atica.cout(_bios_fail + `not passed lexing`, "_bios-normal tc-white", atica.bios);
         //_PARSEREXECUTEOVERRIDE = false; //this stops parser
         //atica.cout(lexer_logs, "_bios-normal tc-white", atica.bios);
         console.log(tokens);
@@ -142,39 +146,148 @@ function _bios_execute() {
     var parsedcommand = parse_data(tokens);
     
     if(parsedcommand.Logs.length == 0 && _PARSEREXECUTEOVERRIDE == true) {
-        atica.cout(_bios_check + `passed parsing`, "_bios-normal tc-white", atica.bios);
+        if(atica.log) atica.cout(_bios_check + `passed parsing`, "_bios-normal tc-white", atica.bios);
         //atica.cout(lexer_logs, "_bios-normal tc-white", atica.bios);
         console.log(parsedcommand);
     } else {
-        atica.cout(_bios_fail + `not passed parsing`, "_bios-normal tc-white", atica.bios);
+        if(atica.log) atica.cout(_bios_fail + `not passed parsing`, "_bios-normal tc-white", atica.bios);
         //atica.cout(lexer_logs, "_bios-normal tc-white", atica.bios);
         console.log(parsedcommand);
     }
     if(parsedcommand.HasSC == false) {
         try {
             assert(CommandfromNormal(parsedcommand.Command, _commands));
-            atica.cout(_bios_check + `passed finding`, "_bios-normal tc-white", atica.bios);
+            if(atica.log) atica.cout(_bios_check + `passed finding`, "_bios-normal tc-white", atica.bios);
             if(parsedcommand) atica.xsilence = parsedcommand.Flags.includes("-xsilence") ? true : false;
             CommandfromNormal(parsedcommand.Command, _commands).execute(parsedcommand);
             atica.xsilence = false;
-            atica.cout(_bios_check + `passed execution`, "_bios-normal tc-white", atica.bios);
+            if(atica.log) atica.cout(_bios_check + `passed execution`, "_bios-normal tc-white", atica.bios);
         } catch {
-            //not a command
-            atica.cout(_bios_fail + `not passed finding`, "_bios-normal tc-white", atica.bios);
+            //bro it might be a bin executor.
+            //notice how bins can not be in packages :>
+            var t = getFile(parsedcommand.Command + "bin", CDRIVE);
+            if(t.ENDL == "bin") {
+                //yay it is a bin
+                console.log("a bin");
+                atica.scriptx(t.getContent());
+                if(atica.log) atica.cout(_bios_check + `passed execution`, "_bios-normal tc-white", atica.bios);
+            } else {
+                //no not a cmd
+                if(atica.log) atica.cout(_bios_fail + `not passed finding`, "_bios-normal tc-white", atica.bios);
+            }
+            
         }
     } else if (parsedcommand.HasSC == true) {
         try {
             assert(CommandfromPkg(parsedcommand.Command, parsedcommand.Subcommand), "failed assert");
-            atica.cout(_bios_check + `passed finding`, "_bios-normal tc-white", atica.bios);
+            if(atica.log) atica.cout(_bios_check + `passed finding`, "_bios-normal tc-white", atica.bios);
             if(parsedcommand) atica.xsilence = parsedcommand.Flags.includes("-xsilence") ? true : false;
             CommandfromPkg(parsedcommand.Command, parsedcommand.Subcommand).execute(parsedcommand);
             atica.xsilence = false;
-            atica.cout(_bios_check + `passed execution`, "_bios-normal tc-white", atica.bios);
+            if(atica.log) atica.cout(_bios_check + `passed execution`, "_bios-normal tc-white", atica.bios);
         } catch {
             //not a command
-            atica.cout(_bios_fail + `not passed finding`, "_bios-normal tc-white", atica.bios);
+            if(atica.log) atica.cout(_bios_fail + `not passed finding`, "_bios-normal tc-white", atica.bios);
         }
     }
+}
+atica.scripty = (text, allowm) => {
+    console.log("scripty!");
+    console.log(`xsil=${atica.xsilence}\nlog=${atica.log}\nallowm=${allowm}`);
+    //everything else
+    var lexer_logs = "";
+    var lexer_logs_amount = 0;
+    var lexer = new Lexer(text);
+    lexer.ThrowLog = function(m) {
+        if(this.ctok != "\u2929") {
+            lexer_logs += m + ", \n";
+            //lexer_logs_amount++;
+        }
+    }
+    lexer.ThrowWarning = function(m) {
+        if(this.ctok != "\u2929") {
+            lexer_logs += m + ", \n";
+            lexer_logs_amount++; //maybe a flag to ignore lexer warning logging
+        }
+    }
+    lexer.ThrowError = function(m) {
+        if(this.ctok != "\u2929") {
+            lexer_logs += m + ", \n";
+            lexer_logs_amount++;
+        }
+    }
+    var tokens = lexer.Lex();
+    if(lexer_logs_amount == 0) {
+        if(allowm) atica.cout(_bios_check + `passed lexing`, "_bios-normal tc-white", atica.bios);
+        //atica.cout(lexer_logs, "_bios-normal tc-white", atica.bios);
+        console.log(tokens);
+    } else {
+        if(allowm) atica.cout(_bios_fail + `not passed lexing`, "_bios-normal tc-white", atica.bios);
+        //_PARSEREXECUTEOVERRIDE = false; //this stops parser
+        //atica.cout(lexer_logs, "_bios-normal tc-white", atica.bios);
+        console.log(tokens);
+    }
+    var parsedcommand = parse_data(tokens);
+    
+    if(parsedcommand.Logs.length == 0 && _PARSEREXECUTEOVERRIDE == true) {
+        if(allowm) atica.cout(_bios_check + `passed parsing`, "_bios-normal tc-white", atica.bios);
+        //atica.cout(lexer_logs, "_bios-normal tc-white", atica.bios);
+        console.log(parsedcommand);
+    } else {
+        if(allowm) atica.cout(_bios_fail + `not passed parsing`, "_bios-normal tc-white", atica.bios);
+        //atica.cout(lexer_logs, "_bios-normal tc-white", atica.bios);
+        console.log(parsedcommand);
+    }
+    if(parsedcommand.HasSC == false) {
+        try {
+            assert(CommandfromNormal(parsedcommand.Command, _commands));
+            if(allowm) atica.cout(_bios_check + `passed finding`, "_bios-normal tc-white", atica.bios);
+            if(parsedcommand) atica.xsilence = parsedcommand.Flags.includes("-xsilence") ? true : false;
+            CommandfromNormal(parsedcommand.Command, _commands).execute(parsedcommand);
+            
+            if(allowm) atica.cout(_bios_check + `passed execution`, "_bios-normal tc-white", atica.bios);
+        } catch {
+            //bro it might be a bin executor.
+            //notice how bins can not be in packages :>
+            var t = getFile(parsedcommand.Command + "bin", CDRIVE);
+            if(t.ENDL == "bin") {
+                //yay it is a bin
+                atica.scriptx(StringAnalyzer(t.getContent()));
+                if(allowm) atica.cout(_bios_check + `passed execution`, "_bios-normal tc-white", atica.bios);
+            } else {
+                //no not a cmd
+                if(allowm) atica.cout(_bios_fail + `not passed finding`, "_bios-normal tc-white", atica.bios);
+            }
+            
+        }
+    } else if (parsedcommand.HasSC == true) {
+        try {
+            assert(CommandfromPkg(parsedcommand.Command, parsedcommand.Subcommand), "failed assert");
+            if(allowm) atica.cout(_bios_check + `passed finding`, "_bios-normal tc-white", atica.bios);
+            if(parsedcommand) atica.xsilence = parsedcommand.Flags.includes("-xsilence") ? true : false;
+            CommandfromPkg(parsedcommand.Command, parsedcommand.Subcommand).execute(parsedcommand);
+            
+            if(allowm) atica.cout(_bios_check + `passed execution`, "_bios-normal tc-white", atica.bios);
+        } catch {
+            //not a command
+            if(allowm) atica.cout(_bios_fail + `not passed finding`, "_bios-normal tc-white", atica.bios);
+        }
+    }
+}
+atica.scriptx = (text) => {
+    //example
+    //echo -p "hello, world"
+    //tree --filesys --cmdl
+    //seperated by \n.
+    var _temp_cnfg = !!atica.log;
+    var ops = text.split("\n");
+    console.log(ops);
+    atica.log = false;
+    for(i = 0; i < ops.length; i++) {
+        console.log(`xsil=${atica.xsilence}\nlog=${atica.log}`);
+        atica.scripty(ops[i], false);
+    }
+    atica.log = _temp_cnfg;
 }
 
 //here is lexer code
@@ -491,6 +604,11 @@ function StringAnalyzer(r) {
             }
         } else if (_o__[i].Type == "variable") {
             //fetch variable contents
+            try {
+                t_.push(GetVariable(_o__[i].Value).getValue());
+            } catch {
+                t_.push("");
+            }
         }
     }
     return t_.join("");
@@ -564,6 +682,7 @@ function AddPackage(pkg) {
  * 💿0x1f4bf
  * ⚡0x26a1
  * 📜0x1f4dc
+ * ☁️0x2601
  * String.fromCodePoint(0x1F4E6) -> 📦
  */
 
@@ -592,7 +711,7 @@ AddCommand(new Command(function(d) {
             atica.cout(`${String.fromCodePoint(0x1f4e6)}${_packages[i].ID}`, "_bios-normal tc-white", atica.bios);
             _Tree_ls(_packages[i].Commands,0x26a1);
         }
-        atica.cout(`${String.fromCodePoint(0x1f4e6)}system`, "_bios-normal tc-white", atica.bios);
+        atica.cout(`${String.fromCodePoint(0x1f4e6)}.root`, "_bios-normal tc-white", atica.bios);
         _Tree_ls(_commands,0x26a1);
     } 
     if(d.Flags.includes("-drives")) {
@@ -609,7 +728,7 @@ AddCommand(new Command(function(d) {
         for(i=0; i<Drives.length;i++) {
             atica.cout(`${String.fromCodePoint(0x1f4bf)}${Drives[i].ID}`, "_bios-normal tc-white", atica.bios);
             for(i2=0; i2<Drives[i].getFiles().length;i2++) {
-                atica.cout(`${Drives[i].getFiles()[i2].ENDL == "sys" ? String.fromCodePoint(0x1f4dc) : String.fromCodePoint(0x1f4c4)}${Drives[i].getFiles()[i2].ID}`, "_bios-normal tc-white", atica.bios);
+                atica.cout(`${Drives[i].getFiles()[i2].ENDL == "sys" ? String.fromCodePoint(0x1f4dc) : Drives[i].getFiles()[i2].ENDL == "bin" ? String.fromCodePoint(0x26a1) : String.fromCodePoint(0x1f4c4)}${Drives[i].getFiles()[i2].ID}`, "_bios-normal tc-white", atica.bios);
             }
         }
     }
@@ -678,6 +797,18 @@ AddCommand(new Command(function(d) {
     }
 }, "write"))
 AddCommand(new Command(function(d) {
+    if(d.Params.length == 2) {
+        try {
+            getFile(d.Params[0], CDRIVE).setContent(getFile(d.Params[0], CDRIVE).getContent()+d.Params[1]);
+            atica.cout(String.fromCodePoint(0x1f4dd) + `appended file ${d.Params[0]} with content ${d.Params[1]}.`, "_bios-normal tc-white", atica.bios, true);
+        } catch {
+            atica.cout(_bios_fail + `invalid file name ${d.Params[0]}`, "_bios-normal tc-white", atica.bios);
+        }
+    } else {
+        atica.cout(_bios_fail + `invalid args amount: ${d.Params.length}.`, "_bios-normal tc-white", atica.bios);
+    }
+}, "append"))
+AddCommand(new Command(function(d) {
     if(d.Params.length == 1) {
         try {
             atica.cout(String.fromCodePoint(0x1f4c4) + getFile(d.Params[0], CDRIVE).getContent(), "_bios-normal tc-white", atica.bios);
@@ -716,6 +847,23 @@ AddCommand(new Command(function(d) {
         atica.cout(_bios_fail + `unknown error`, "_bios-normal tc-white", atica.bios);
     }
 }, "exec"))
+AddPackage(new Package([
+
+], "sys"))
 // AddPackage(new Package([new Command(function(d) {
 //     atica.cout(`sample`, "_bios-normal tc-white", atica.bios);
 // }, "sample")], "testpkg"));
+
+//!!!system vars ---
+AddVariable(new FVar("s", "\"", "System"));
+AddVariable(new FVar("n", "\n", "System"));
+AddVariable(new FVar("t", "\t", "System"));
+
+//!!!bin test ---
+var _bin_test = new FFile("testbin");
+_bin_test.ENDL = "bin";
+_bin_test.setContent(`echo -p "hello, world"`);
+CDRIVE.appendFile(_bin_test);
+
+//!!!profile ---
+atica.log = false;
