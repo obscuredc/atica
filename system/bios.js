@@ -847,6 +847,18 @@ AddCommand(new Command(function(d) {
         atica.cout(_bios_fail + `unknown error`, "_bios-normal tc-white", atica.bios);
     }
 }, "exec"))
+AddCommand(new Command(function(d) {
+    try {
+        var _otf = getFile(d.Params[0], CDRIVE);
+        var _tfile = new FFile(_otf.ID + "bin");
+        _tfile.ENDL = "bin";
+        _tfile.setContent(_otf.getContent());
+        CDRIVE.appendFile(_tfile);
+        atica.cout(_bios_check + `compiled bin file`, "_bios-normal tc-white", atica.bios);
+    } catch {
+        atica.cout(_bios_fail + `unknown error`, "_bios-normal tc-white", atica.bios);
+    }
+}, "bincompile"))
 AddPackage(new Package([
 
 ], "sys"))
@@ -864,6 +876,16 @@ var _bin_test = new FFile("testbin");
 _bin_test.ENDL = "bin";
 _bin_test.setContent(`echo -p "hello, world"`);
 CDRIVE.appendFile(_bin_test);
+// $ test
+// -> hello, world
+
+var _cmp_test = new FFile("cmpl");
+_cmp_test.setContent(`echo -p "it compiled"`);
+CDRIVE.appendFile(_cmp_test);
+// $ bincompile "cmpl"
+// $ cmpl
+// -> it compiled!
 
 //!!!profile ---
 atica.log = false;
+atica.xsilence = false;
