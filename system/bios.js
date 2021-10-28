@@ -862,7 +862,7 @@ AddCommand(new Command(function(d) {
 AddCommand(new Command(function(d) {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
-        atica.cout(this.status, "_bios-normal tc-white", atica.bios);
+        atica.cout("[" + this.readyState + "] " +this.status, "_bios-normal tc-white", atica.bios);
         if (this.readyState == 4 && this.status == 200) {
             // Typical action to be performed when the document is ready:
             var msg = xhttp.responseText;
